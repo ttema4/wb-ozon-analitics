@@ -14,9 +14,8 @@ def analits_wb(route_to_file, parent=None, main=None):
                     'Цена розничная с учетом согласованной скидки',
                     'К перечислению Продавцу за реализованный Товар', 'Количество доставок',
                     'Количество возврата', 'Услуги по доставке товара покупателю', 'Доплаты']
-    HEADERS_TO = ['id позиции', 'Кол-во продаж', 'Кол-во доставок', 'Кол-во возвратов', 'Цена с учетом скидки',
-                  'Сумма к перечислению', 'Затраты на доставку', 'Сумма доплат', 'За вычетом логистики и доплат']
     COUNT_ANALIZED_COLS = 8
+
     df = pd.read_excel(route_to_file)
     df = df.dropna(how='all')
 
@@ -58,16 +57,18 @@ def analits_wb(route_to_file, parent=None, main=None):
     new_data = []
     for x in analized_data.keys():
         new_line = analized_data[x].copy()
-        new_line[3] = round(new_line[3], 1)  # округления и подсчет итоговой суммы
-        new_line[4] = round(new_line[4], 1)
-        new_line[5] = round(new_line[5], 1)
-        new_line[6] = round(new_line[6], 1)
-        new_line[7] = round(new_line[4] - new_line[5] - new_line[6], 2)
+        new_line[1] = int(new_line[1])  # округления и подсчет итоговой суммы
+        new_line[2] = int(new_line[2])
+        new_line[3] = round(new_line[3])
+        new_line[4] = round(new_line[4])
+        new_line[5] = round(new_line[5])
+        new_line[6] = round(new_line[6])
+        new_line[7] = round(new_line[4] - new_line[5] - new_line[6])
         new_data.append([x] + new_line)
     new_data.sort(key=lambda x: x[0])
     new_data.append(
         [len(new_data)] + [sum([new_data[j][i] for j in range(len(new_data))]) for i in range(1, len(new_data[0]))])
-    return new_data
+    return new_data  # id, кол-во продаж, кол-во дост, кол-во возвр, сумма со скидками, сумма к переводу, затраты на дост, доплаты
 
 
 def analits_ozon(route_to_file):

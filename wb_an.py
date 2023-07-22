@@ -18,7 +18,7 @@ class WbAnalits(QtWidgets.QMainWindow):
 
         else:
             self.sheet_name = get_sheet_name(route)
-            self.name_file = route.split('/')[-1]
+            self.name_file = ''.join(route.split('/')[-1].split('.')[:-1])
             self.upd_data = [0] * 4
             self.sr_doh = 0
             self.sr_pr = 0
@@ -27,17 +27,16 @@ class WbAnalits(QtWidgets.QMainWindow):
 
     def initUI(self):
         uic.loadUi('uis/wb_an2.ui', self)
-        self.pushButton.clicked.connect(self.upd)
         self.pushButton_2.clicked.connect(self.download)
         self.pushButton_3.clicked.connect(self.back)
-        points = ['Всего товаров: ', 'Всего продаж: ', 'Всего доставок: ', 'Всего возвратов: ',
-                  'Сумма с учетом скидки: ', 'Сумма к перечислению: ', 'Затраты на доставку: ', 'Сумма доплат: ',
-                  'Итоговая сумма: ']
-        stats = ''
-        for i in range(len(points)):
-            stats += f"<b>·</b> {points[i]} <b>{be_nums(self.data[-1][i])}</b><br>"
-        stats += '<br>'
+        self.lineEdit.textEdited.connect(self.upd)
+        self.lineEdit_2.textEdited.connect(self.upd)
+        self.lineEdit_3.textEdited.connect(self.upd)
 
+        stats = ''
+        stats += f"· Продажи: <b>{str(be_nums(self.data[-1][1]))}шт.</b><br>"
+        stats += f"· Возвраты: <b>{be_nums(self.data[-1][3])}шт.</b><br>"
+        stats += f"· Доплаты: <b>{be_nums(self.data[-1][7])}руб.</b><br>"
         self.label_6.setText(stats)
 
         series = QPieSeries()
@@ -75,76 +74,62 @@ class WbAnalits(QtWidgets.QMainWindow):
 
     def upd(self):
         self.pushButton_2.setEnabled(True)
-        self.upd_data[0] = self.lineEdit.text() if self.lineEdit.text() != '' else 0
-        self.upd_data[3] = self.lineEdit_2.text() if self.lineEdit_2.text() != '' else 0
-        self.upd_data[2] = self.lineEdit_3.text() if self.lineEdit_3.text() != '' else 0
-        self.upd_data[1] = self.lineEdit_4.text() if self.lineEdit_3.text() != '' else 0
 
-        points = ['Всего товаров: ', 'Всего продаж: ', 'Всего доставок: ', 'Всего возвратов: ',
-                  'Сумма с учетом скидки: ', 'Сумма к перечислению: ', 'Затраты на доставку: ', 'Сумма доплат: ',
-                  'Итоговая сумма: ']
+        self.storage_sum = int(self.lineEdit.text()) if self.lineEdit.text() else 0
+        self.extra_paids = int(self.lineEdit_2.text()) if self.lineEdit_2.text() else 0
+        self.selfcount = int(self.lineEdit_3.text()) if self.lineEdit_3.text() else 0
+
+        # data = id, кол-во продаж, кол-во дост, кол-во возвр, сумма со скидками, сумма к переводу, затраты на дост, доплаты, итого сумма (к пер - дост)
+
         stats = ''
-        for i in range(len(points) - 1):
-            stats += f"<b>·</b> {points[i]} <b>{be_nums(self.data[-1][i])}</b><br>"
-        stats += '<br>'
-        stats += f"<b>·</b> {'Итог за вычетом доп. расх.: '} <b>{be_nums(self.data[-1][-1] - int(self.upd_data[0]) - int(self.upd_data[3]))}</b><br>"
-        stats += f"<b>·</b> {'Средняя цена товара: '} <b>{be_nums(self.data[-1][4] / self.data[-1][1])}</b><br>"
-        stats += f"<b>·</b> {'Средний доход: '} <b>{be_nums((self.data[-1][-1] - int(self.upd_data[0]) - int(self.upd_data[3])) / self.data[-1][1])}</b><br>"
-        self.sr_doh = round((self.data[-1][-1] - int(self.upd_data[0]) - int(self.upd_data[3])) / self.data[-1][1], 1)
-        stats += f"<b>·</b> {'Средняя прибыль: '} <b>{be_nums(self.sr_doh - int(self.upd_data[1]))}</b><br>"
-        self.sr_pr = round(self.sr_doh - int(self.upd_data[1]), 2)
-        stats += f"<b>· {'Доходность продукта: '} {str(round(self.sr_pr / (self.data[-1][4] / self.data[-1][1]) * 100))}%</b><br>"
-        stats += '<br>'
-        stats += f"<b>·</b> {'Цена рекламы/1 товар: '} <b>{be_nums(int(self.upd_data[2]) / self.data[-1][1])}</b><br>"
-        self.tov_min_rek = self.sr_pr - (int(self.upd_data[2]) / self.data[-1][1])
-        stats += f"<b>· {'Доходность чистая: '} {str(round(self.tov_min_rek / (self.data[-1][4] / self.data[-1][1]) * 100))}%</b><br>"
-        stats += '<br>'
-        stats += f"<b>· {'Итог недели чистыми: '} {be_nums(self.tov_min_rek * self.data[-1][1])} руб.< /b > < br >"
+        stats += f"· Хранение - {str(round(self.storage_sum / self.data[-1][4] * 100))}%<br>"
+        stats += f"· Реклама - {str(round(self.extra_paids / self.data[-1][4] * 100))}%<br>"
+        self.label_7.setText(stats)
 
-        self.label_6.setText(stats)
+        stats = ''
+        stats += f"· Сумма с учётом скидки: <b>{be_nums(self.data[-1][4])}руб.</b><br>"
+        stats += f"<i>&nbsp;&nbsp;&nbsp;&nbsp;– Цена за 1шт: </i><b>{be_nums(round(self.data[-1][4] / self.data[-1][1]))}руб.</b><br>"
+
+        stats += f"· Сумма коммисий МП: <b>{be_nums(self.data[-1][4] - self.data[-1][5])}руб.</b> | {str(round((self.data[-1][4] - self.data[-1][5]) / self.data[-1][4] * 100))}%<br>"
+        stats += f"<i>&nbsp;&nbsp;&nbsp;&nbsp;– Цена за 1шт: </i><b>{be_nums(round(self.data[-1][5] / self.data[-1][1]))}руб.</b><br>"
+
+        stats += f"· Сумма затрат ПослМиля: <b>{be_nums(self.data[-1][6])}руб.</b> | {str(round(self.data[-1][6] / self.data[-1][4] * 100))}%<br>"
+        stats += f"<i>&nbsp;&nbsp;&nbsp;&nbsp;– Цена за 1шт: </i><b>{be_nums(round((self.data[-1][5] - self.data[-1][6]) / self.data[-1][1]))}руб.</b><br>"
+
+        self.result = self.data[-1][5] - self.data[-1][6] - self.storage_sum + self.data[-1][7]
+        stats += f"· Итого без рекламы: <b>{be_nums(self.result)}руб.</b> | {str(round(self.result / self.data[-1][4] * 100))}%<br>"
+        stats += f"<i>&nbsp;&nbsp;&nbsp;&nbsp;– Цена за 1шт: </i><b>{be_nums(round(self.result / self.data[-1][1]))}руб.</b><br>"
+        stats += '<br>'
+
+        stats += f"· Цена рекламы/1 товар: <b>{be_nums(round(self.extra_paids / self.data[-1][1]))}руб.</b><br>"
+        stats += '<br>'
+
+        one_piece = round((self.result - self.extra_paids) / self.data[-1][1])
+        stats += f"· Итого к перечислению: <b>{be_nums(self.result - self.extra_paids)}руб.</b> | {str(round((self.result - self.extra_paids) / self.data[-1][4] * 100))}%<br>"
+        stats += f"<i>&nbsp;&nbsp;&nbsp;&nbsp;– Цена за 1шт: </i><b>{be_nums(one_piece)}руб.</b><br>"
+        stats += f"<i>&nbsp;&nbsp;&nbsp;&nbsp;– Себестоимость: </i><b>{be_nums(self.selfcount)}руб.</b><br>"
+        stats += f"<i>&nbsp;&nbsp;&nbsp;&nbsp;– Доход за 1шт: </i><b>{be_nums(one_piece - self.selfcount)}руб.</b><br>"
+        stats += '<br>'
+
+        stats += f"<b>· Итоговый доход: {be_nums((one_piece - self.selfcount) * self.data[-1][1])}руб.</b> | {str(round(((one_piece - self.selfcount) * self.data[-1][1]) / self.data[-1][4] * 100))}%<br>"
+
+        self.label_8.setText(stats)
 
     def download(self):
-        route = QFileDialog.getExistingDirectory(self, 'Место сохранения', '/')
         book = xlwt.Workbook(encoding='utf-8')
         sheet1 = book.add_sheet('Sheet 1')
-        headers = ['id товара', 'Всего продаж, шт.', 'Всего доставок, шт.', 'Всего возвратов, шт.',
-                   'Общ. стоимость с учетом скидки, руб.', 'Сумма к перечислению, руб.', 'Затраты на доставку, руб.',
-                   'Сумма доплат, руб.']
+
+        headers = ['Продажи, шт.', 'Продажи на площадке, руб', 'К перечислению после вычета МП, руб.',
+                   'Реклама МП, руб.',
+                   'К перечислению после вычета рекламы, руб.', 'Себестоимость, 1 шт.']
         for i in range(len(headers)):
-            sheet1.write(0, i, headers[i], style=xlwt.easyxf('font: name Calibri, bold on'))
-        for i in range(len(self.data)):
-            for j in range(len(headers)):
-                if i == len(self.data) - 1 and j == 0:
-                    sheet1.write(i + 1, j, 'Итог:', style=xlwt.easyxf(
-                        'font: name Calibri, bold on; pattern: pattern solid, fore_colour light_orange;'))
-                elif j == 0 or i == len(self.data) - 1:
-                    sheet1.write(i + 1, j, self.data[i][j], style=xlwt.easyxf(
-                        'font: name Calibri, bold on'))
-                elif i % 2 == 1:
-                    sheet1.write(i + 1, j, self.data[i][j],
-                                 style=xlwt.easyxf(
-                                     'font: name Calibri; pattern: pattern solid, fore_colour gray25;'))
-                else:
-                    sheet1.write(i + 1, j, self.data[i][j], style=xlwt.easyxf('font: name Calibri'))
-        headers = ['Итог за вычетом доп. расх, руб.', 'Средняя цена товара, руб.', 'Средний доход, руб.',
-                   'Средняя прибыль, руб.',
-                   'Доходность продукта, %', 'Цена рекламы/1 товар, руб.', 'Доходность чистая, %',
-                   'Итог недели чистыми, руб.']
-        for j in range(9, 9 + len(headers)):
-            sheet1.write(0, j, headers[j - 9], style=xlwt.easyxf('font: name Calibri, bold on'))
+            sheet1.write(i, 0, headers[i], style=xlwt.easyxf('font: name Calibri, bold on'))
+        # data = id, кол-во продаж, кол-во дост, кол-во возвр, сумма со скидками, сумма к переводу, затраты на дост, доплаты, итого сумма (к пер - дост)
+        sheet1.write(0, 1, self.data[-1][1])
+        sheet1.write(1, 1, self.data[-1][4])
+        sheet1.write(2, 1, self.data[-1][5])
+        sheet1.write(3, 1, self.extra_paids)
+        sheet1.write(4, 1, self.result)
+        sheet1.write(5, 1, self.selfcount)
 
-        sheet1.write(1, 9, be_nums(self.data[-1][-1] - int(self.upd_data[0]) - int(self.upd_data[3])))
-        sheet1.write(1, 10, be_nums(self.data[-1][4] / self.data[-1][1]))
-        sheet1.write(1, 11,
-                     be_nums((self.data[-1][-1] - int(self.upd_data[0]) - int(self.upd_data[3])) / self.data[-1][1]))
-        sheet1.write(1, 12, be_nums(self.sr_doh - int(self.upd_data[1])))
-        sheet1.write(1, 13, str(round(self.sr_pr / (self.data[-1][4] / self.data[-1][1]) * 100)), style=xlwt.easyxf(
-            'font: name Calibri, bold on; pattern: pattern solid, fore_colour yellow;'))
-        sheet1.write(1, 14, be_nums(int(self.upd_data[2]) / self.data[-1][1]))
-        sheet1.write(1, 15, str(round(self.tov_min_rek / (self.data[-1][4] / self.data[-1][1]) * 100)),
-                     style=xlwt.easyxf(
-                         'font: name Calibri, bold on; pattern: pattern solid, fore_colour yellow;'))
-        sheet1.write(1, 16, be_nums(self.tov_min_rek * self.data[-1][1]), style=xlwt.easyxf(
-            'font: name Calibri, bold on; pattern: pattern solid, fore_colour light_green;'))
-
-        book.save(route + '/' + self.name_file + '_week.xls')
+        book.save('results_wb/' + self.name_file + '_wb_week.xls')

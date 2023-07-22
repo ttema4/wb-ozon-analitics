@@ -2,7 +2,7 @@ import xlwt
 from PyQt5.Qt import *
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtChart import QChart, QChartView, QPieSeries
-from table_analit import analits_ozon, get_sheet_name
+from table_analit import analits_ozon, get_sheet_name, analits_wb
 from another_funcs import be_nums
 
 
