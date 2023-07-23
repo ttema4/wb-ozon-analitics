@@ -8,7 +8,6 @@ def be_nums(num):
         ans = ln + " " + ans
     ans = ans.rstrip().lstrip('0')
     if ans == '': ans = '0'
-    if dr != 0: ans += str(dr)[1:]
     return ans
 
 # print(be_nums(1000))

@@ -1,4 +1,5 @@
 import pandas as pd
+from xlrd import *
 
 
 def get_sheet_name(route_to_file):
@@ -74,4 +75,13 @@ def analits_wb(route_to_file, parent=None, main=None):
 def analits_ozon(route_to_file):
     pass
 
-#  print(analits_wb('Книга1.xlsx'))
+
+def analits_month(route_to_file):
+    book = open_workbook(route_to_file)
+    sheet = book.sheet_by_index(0)
+    ans = []
+    for i in range(6):
+        ans.append(int(sheet.cell_value(i, 1)))
+    return ans
+
+# print(analits_month('results_wb/Книга1_wb_week.xls'))

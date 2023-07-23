@@ -129,7 +129,7 @@ class WbAnalits(QtWidgets.QMainWindow):
         sheet1.write(1, 1, self.data[-1][4])
         sheet1.write(2, 1, self.data[-1][5])
         sheet1.write(3, 1, self.extra_paids)
-        sheet1.write(4, 1, self.result)
+        sheet1.write(4, 1, self.result - self.extra_paids)
         sheet1.write(5, 1, self.selfcount)
 
         book.save('results_wb/' + self.name_file + '_wb_week.xls')
