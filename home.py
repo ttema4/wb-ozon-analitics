@@ -3,7 +3,7 @@ import sys
 from PyQt5 import QtWidgets, uic
 from wb_an import WbAnalits
 from ozon_an import OzonAnalits
-from table_analit import analits_month
+from table_analit import analits_month, analits_wb
 from month_an import MonthAnalits
 
 
@@ -26,10 +26,19 @@ class HomeScreen(QtWidgets.QMainWindow):
     def anal_wb_week(self):
         route = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', '/', "Excel (*.xls *.xlsx)")[0]
         if route:
-            self.st = WbAnalits(route, self)
-            self.st.move(self.x() - 230, self.y() - 150)
-            self.st.show()
-            self.hide()
+            try:
+                analits_wb(route)
+            except:
+                self.label_6.setText('<p style="color: rgb(250, 55, 55);">Ошибка данных</p>')
+                self.pushButton.setText('Открыть файлы ❌')
+
+            else:
+                self.pushButton.setText('Открыть файлы')
+                self.label_6.setText('')
+                self.st = WbAnalits(route, self)
+                self.st.move(self.x() - 230, self.y() - 150)
+                self.st.show()
+                self.hide()
 
     def anal_ozon_week(self):
         route = QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', '/', "Excel (*.xls *.xlsx)")[0]

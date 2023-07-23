@@ -10,20 +10,14 @@ class WbAnalits(QtWidgets.QMainWindow):
     def __init__(self, route, parent=None):
         super().__init__()
         self.parent = parent
-        try:
-            self.data = analits_wb(route)
-        except:
-            uic.loadUi('uis/error3.ui', self)
-            self.pushButton.clicked.connect(self.back)
-
-        else:
-            self.sheet_name = get_sheet_name(route)
-            self.name_file = ''.join(route.split('/')[-1].split('.')[:-1])
-            self.upd_data = [0] * 4
-            self.sr_doh = 0
-            self.sr_pr = 0
-            self.tov_min_rek = 0
-            self.initUI()
+        self.data = analits_wb(route)
+        self.sheet_name = get_sheet_name(route)
+        self.name_file = ''.join(route.split('/')[-1].split('.')[:-1])
+        self.upd_data = [0] * 4
+        self.sr_doh = 0
+        self.sr_pr = 0
+        self.tov_min_rek = 0
+        self.initUI()
 
     def initUI(self):
         uic.loadUi('uis/wb_an2.ui', self)
